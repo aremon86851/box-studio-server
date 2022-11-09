@@ -39,6 +39,11 @@ async function run() {
             const reviews = await reviewsCollection.insertOne(info)
             res.send(reviews)
         })
+        app.post('/services', async (req, res) => {
+            const serviceInfo = req.body;
+            const service = await servicesCollection.insertOne(serviceInfo);
+            res.send(service)
+        })
 
         app.get('/reviews/:id', async (req, res) => {
             const id = req.params.id;
