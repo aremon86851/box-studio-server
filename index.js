@@ -39,6 +39,23 @@ async function run() {
             const reviews = await reviewsCollection.insertOne(info)
             res.send(reviews)
         })
+
+        app.get('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { serviceId: id };
+            const cursor = await reviewsCollection.find(query)
+            const reviews = await cursor.toArray()
+            res.send(reviews)
+        })
+
+        app.get('/reviews', async (req, res) => {
+            console.log(req.query.name)
+            const reqEmail = req.query.name;
+            const query = { email: reqEmail };
+            const cursor = await reviewsCollection.find(query);
+            const userReviews = await cursor.toArray()
+            res.send(userReviews)
+        })
     }
     finally {
 
