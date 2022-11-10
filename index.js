@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express()
 require("dotenv").config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -12,10 +13,32 @@ app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.PASSWORD}@cluster0.hvqv2xi.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+function jwtVerifying(req, res, next) {
+    const headerAuthor = req.headers.authorization;
+    if (!headerAuthor) {
+        return res.status.send({ message: "unauthorize user" })
+    }
+    const token = headerAuthor.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(401).send({ message: "unauthorized access" })
+        }
+        req.decoded = decoded
+        next()
+    })
+}
 async function run() {
     try {
         const servicesCollection = client.db('assignment11').collection('services');
         const reviewsCollection = client.db('assignment11').collection('reviews');
+
+
+        app.post('/jwt', (req, res) => {
+            const user = req.body
+            console.log(user)
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+            res.send({ token })
+        })
         app.get('/homeService', async (req, res) => {
             const query = {}
             const cursor = await servicesCollection.find(query)
@@ -34,7 +57,11 @@ async function run() {
             const service = await servicesCollection.findOne(query)
             res.send(service)
         })
-        app.get('/reviews', async (req, res) => {
+        app.get('/reviews', jwtVerifying, async (req, res) => {
+            const decoded = req.decoded;
+            if (decoded.email !== req.query.name) {
+                return res.status(403).send({ message: 'unauthorized user' })
+            }
             const reqEmail = req.query.name;
             const query = { email: reqEmail };
             const cursor = await reviewsCollection.find(query);
