@@ -35,7 +35,6 @@ async function run() {
             res.send(service)
         })
         app.get('/reviews', async (req, res) => {
-            console.log(req.query.name)
             const reqEmail = req.query.name;
             const query = { email: reqEmail };
             const cursor = await reviewsCollection.find(query);
@@ -48,6 +47,26 @@ async function run() {
             const cursor = await reviewsCollection.find(query)
             const reviews = await cursor.toArray()
             res.send(reviews)
+        })
+
+        app.get('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const reviews = await reviewsCollection.findOne(query)
+            res.send(reviews)
+        })
+
+        app.put('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const options = { upsert: true }
+            const updateDocs = {
+                $set: {
+                    description: req.body.reviews
+                }
+            }
+            const updateReviews = await reviewsCollection.updateOne(query, updateDocs, options)
+            res.send(updateReviews)
         })
         app.post('/reviews', async (req, res) => {
             const info = req.body;
